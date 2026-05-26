@@ -1,0 +1,88 @@
+<section class="eac-executive" id="exec">
+  <h2>
+    执行摘要
+    <span class="eac-section-sub">Executive Summary</span>
+  </h2>
+
+  <div class="eac-exec-hero">
+    {# ---- Score Gauge (SVG ring, works in WeasyPrint + Playwright) ---- #}
+    <div class="eac-gauge-wrap">
+      {% set score_color %}{% if overall_score >= 70 %}#34A853{% elif overall_score >= 40 %}#FBBC04{% else %}#EA4335{% endif %}{% endset %}
+      {% set circumference = 339 %}
+      {% set dash = ((overall_score / 100) * circumference) | int %}
+      <svg width="120" height="120" viewBox="0 0 120 120">
+        <circle cx="60" cy="60" r="54" fill="none" stroke="#E8EAED" stroke-width="12"/>
+        <circle cx="60" cy="60" r="54" fill="none" stroke="{{ score_color }}" stroke-width="12"
+                stroke-dasharray="{{ dash }} {{ circumference }}"
+                stroke-linecap="round"
+                transform="rotate(-90 60 60)"/>
+        <circle cx="60" cy="60" r="42" fill="#FFFFFF"/>
+        <text x="60" y="56" text-anchor="middle" font-family="Inter, sans-serif" font-size="32" font-weight="700" fill="#202124">{{ overall_score }}</text>
+        <text x="60" y="74" text-anchor="middle" font-family="Inter, sans-serif" font-size="11" fill="#9AA0A6">/ 100</text>
+      </svg>
+      <div class="eac-gauge-caption">综合评分 Overall Score</div>
+    </div>
+
+    {# ---- Severity Pills ---- #}
+    <div class="eac-exec-stats">
+      <div class="eac-severity-summary">
+        {% if p0_count %}
+        <span class="eac-sev-pill sev-p0">
+          <span class="sev-dot" style="background:#EA4335;"></span> P0&nbsp;紧急&nbsp;<strong>{{ p0_count }}</strong>
+        </span>
+        {% endif %}
+        {% if p1_count %}
+        <span class="eac-sev-pill sev-p1">
+          <span class="sev-dot" style="background:#E37400;"></span> P1&nbsp;重要&nbsp;<strong>{{ p1_count }}</strong>
+        </span>
+        {% endif %}
+        {% if p2_count %}
+        <span class="eac-sev-pill sev-p2">
+          <span class="sev-dot" style="background:#4285F4;"></span> P2&nbsp;建议&nbsp;<strong>{{ p2_count }}</strong>
+        </span>
+        {% endif %}
+        {% if pass_count %}
+        <span class="eac-sev-pill sev-pass">
+          <span class="sev-dot" style="background:#34A853;"></span> 通过&nbsp;<strong>{{ pass_count }}</strong>
+        </span>
+        {% endif %}
+      </div>
+
+      {# ---- Leakage Risk ---- #}
+      {% if leakage_risk %}
+      <div class="eac-leakage-box leakage-{{ leakage_risk }}">
+        <div class="eac-leakage-indicator">
+          {% if leakage_risk == 'high' %}
+          <span class="leakage-circle" style="background:#EA4335;"></span>
+          {% elif leakage_risk == 'medium' %}
+          <span class="leakage-circle" style="background:#FBBC04;"></span>
+          {% else %}
+          <span class="leakage-circle" style="background:#34A853;"></span>
+          {% endif %}
+        </div>
+        <div class="eac-leakage-content">
+          <div class="eac-leakage-title">广告预算追踪风险：{{ leakage_risk | upper }}</div>
+          <div class="eac-leakage-desc">{{ leakage_description | safe }}</div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ---- Top Actions ---- #}
+  <div class="eac-top-actions">
+    <h3>优先行动项 Top Actions</h3>
+    {% for action in top_actions[:3] %}
+    <div class="eac-action-card">
+      <span class="eac-action-num">{{ loop.index }}</span>
+      <div class="eac-action-body">
+        <div class="eac-action-title">{{ action.title }}</div>
+        <div class="eac-action-impact">{{ action.impact }}</div>
+      </div>
+      <div class="eac-action-effort">
+        <span class="eac-effort-tag">{{ action.effort }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
