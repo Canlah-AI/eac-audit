@@ -1,25 +1,64 @@
-# EAC Infrastructure Audit
+# Audit Report Generator (presentation layer)
 
-Automated website infrastructure audit for cross-border e-commerce sellers. Runs 4 parallel probes and generates a branded HTML + PDF report with severity-ranked findings and actionable recommendations.
+One command turns a URL into a branded HTML + PDF audit report. This repo is the
+**presentation layer**: it runs the on-site infra audit, pulls off-site SEO data
+from the separate `canmarket-site-audit` probe engine, merges both into a neutral
+report contract, and renders it through a pluggable template. The Google EAC report
+is just the **first template** — drop a new folder under `templates/` to add your own.
 
-Built for the Google EAC (E-Commerce Acceleration Center) program.
+## Architecture — three layers
 
-## What It Audits
+```
+DATA                         CONTRACT                  PRESENTATION
+canmarket-site-audit  ──┐
+  (off-site probes)     ├─→  contract.py  ─────────→  templates/google/   ─→ HTML/PDF
+this repo's eac_* probes┘    (neutral report dict)    templates/canmarket/ (your own)
+  (on-site infra)
+```
 
-| Module | Probe | What It Checks |
-|--------|-------|----------------|
-| Global Speed | `eac_speed_probe` | TTFB, LCP (mobile + desktop), CDN detection, server geolocation, HTTP/2 |
-| Lead Form Security | `eac_form_probe` | CAPTCHA protection, form field friction, CMS detection, anti-spam |
-| Trust Content | `eac_trust_probe` | Blog/content section, product page trust signals (specs, testimonials, certifications, comparison), SSL |
-| Conversion Tracking | `eac_tracking_probe` | GA4, GTM, Google Ads, Meta Pixel, Consent Mode v2, Enhanced Conversions, ad spend leakage risk |
+- **Data layer** never changes when you swap templates.
+- **Templates** only restyle the same contract — see `contract.py` for the field list.
+- Wiring to the engine is resolved via `$CANMARKET_AUDIT_PATH` (default
+  `~/dev/canmarket-site-audit-v1.1`); off-site probes are loaded by file path so the
+  two repos' `probes` packages never collide.
 
-All 4 probes run concurrently. A typical audit completes in **10-30 seconds**.
+## One command
 
-## Output
+```bash
+pip install requests jinja2 weasyprint
+export SERPER_API_KEY=...   # for off-site probes
 
-- **HTML report** — A4-ready branded report with executive summary, module scores, severity matrix (P0/P1/P2), and inline code fix snippets
-- **JSON data** — Machine-readable findings for integration with other tools
-- **PDF** — Print-ready version via WeasyPrint (optional)
+# Full report: on-site + off-site, HTML + PDF, Google template
+python report.py modernshade.org --brand "Modern Shade" --market US,EU,SEA --open
+
+# Pick a template / format
+python report.py example.com --template google --format pdf
+python report.py --list-templates
+
+# On-site only (no Serper calls)
+python report.py example.com --no-offsite
+```
+
+Output lands in `output/{domain}/{template}-audit-{date}.{html,pdf,json}`.
+
+## What it audits
+
+**On-site infra** (4 modules, this repo's `probes/`):
+
+| Module | Probe | Checks |
+|--------|-------|--------|
+| Global Speed | `eac_speed_probe` | TTFB, LCP (mobile+desktop), CDN, server geo, HTTP/2 |
+| Lead Form Security | `eac_form_probe` | CAPTCHA, form friction, CMS detection, anti-spam |
+| Trust Content | `eac_trust_probe` | Blog/content, product trust signals, SSL |
+| Conversion Tracking | `eac_tracking_probe` | GA4, GTM, Google Ads, Meta Pixel, Consent Mode v2 |
+
+**Off-site SEO** (3 modules, from the `canmarket-site-audit` engine):
+
+| Module | Probes | Checks |
+|--------|--------|--------|
+| Off-Site Authority | `backlink_scan`, `community_mention_scan`, `news_coverage_scan` | external mentions, Reddit/Quora, news coverage |
+| Schema & AI Readiness | `schema_validator`, `content_freshness_scan` | JSON-LD, sitemap, content freshness |
+| Social & NAP | `social_influence_scan`, `nap_consistency_scan` | follower reach, NAP consistency |
 
 ### Scoring
 
@@ -31,23 +70,19 @@ All 4 probes run concurrently. A typical audit completes in **10-30 seconds**.
 
 Overall score = 100 - total deductions (floor 0).
 
-## Quick Start
+## Adding a template
+
+Copy `templates/google/` to `templates/<name>/`, restyle `report.html.j2`
+(it consumes the contract documented in `templates/canmarket/README.md`), and run
+`python report.py <url> --template <name>`. No data-layer changes.
+
+## Legacy direct CLI
+
+`eac_audit.py` still runs the on-site 4-probe audit standalone (no off-site, no
+template selection):
 
 ```bash
-# Install dependencies
-pip install requests jinja2 weasyprint
-
-# Run a basic audit
 python eac_audit.py https://example.com --company "Example Corp" --market US,EU
-
-# Full audit with form and product page
-python eac_audit.py https://example.com \
-    --form-url https://example.com/contact \
-    --thank-you-url https://example.com/thank-you \
-    --product-page https://example.com/product/abc \
-    --company "某某科技" \
-    --market US,EU,SEA \
-    --open
 ```
 
 ### CLI Options

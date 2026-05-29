@@ -26,7 +26,7 @@ from urllib.parse import urlparse
 
 from jinja2 import Environment, FileSystemLoader
 
-TEMPLATE_DIR = Path(__file__).parent / "render" / "templates"
+TEMPLATE_DIR = Path(__file__).parent / "templates" / "google"
 
 
 def _run_speed(url: str, markets: str = "全球") -> dict:
@@ -303,7 +303,7 @@ def render_report(data: dict, output_dir: Path, generate_pdf: bool = True) -> tu
     output_dir.mkdir(parents=True, exist_ok=True)
 
     env = Environment(loader=FileSystemLoader(str(TEMPLATE_DIR)), autoescape=True)
-    tmpl = env.get_template("eac-report.html.j2")
+    tmpl = env.get_template("report.html.j2")
     html = tmpl.render(**{k: v for k, v in data.items() if not k.startswith("_")})
 
     audit_date = data.get("audit_date", date.today().strftime("%Y-%m-%d"))
