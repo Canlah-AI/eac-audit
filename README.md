@@ -195,3 +195,17 @@ MIT
 ---
 
 Built by [Canlah AI](https://canlah.ai) for the Google EAC program.
+
+## Fonts (required for correct CJK rendering)
+
+The Google template renders Chinese + Latin mixed text. It needs two fonts
+installed so weights match across scripts (WeasyPrint does not synthesize bold
+for CJK — a missing-weight CJK face renders thin next to bold Latin):
+
+```bash
+brew install --cask font-noto-sans-sc font-inter
+```
+
+`font-family` stacks lead with `Inter` (Latin) then `Noto Sans SC` (CJK). Do NOT
+use `PingFang SC` in the stack — fontconfig mis-aliases it to Verdana (a
+Latin-only font), which breaks CJK weight matching.
